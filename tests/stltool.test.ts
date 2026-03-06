@@ -1,4 +1,4 @@
-import { describe, test, expect, beforeAll } from "@jest/globals";
+import { describe, test, expect, beforeAll, jest } from "@jest/globals";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -23,7 +23,7 @@ import {
   formatMeasure,
   layFlat,
 } from "../src/operations.js";
-import { parseArgs } from "../src/cli.js";
+import { parseArgs, helpText } from "../src/cli.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -450,6 +450,80 @@ describe("CLI argument parsing", () => {
     expect(args.operations[1]!.kind).toBe("scale");
     expect(args.operations[2]!.kind).toBe("floor");
     expect(args.operations[3]!.kind).toBe("measure");
+  });
+});
+
+describe("Help and no-args behavior", () => {
+  test("helpText includes usage line", () => {
+    expect(helpText).toContain("Usage: stltool <input.stl>");
+  });
+
+  test("helpText documents all operations", () => {
+    expect(helpText).toContain("--center");
+    expect(helpText).toContain("--floor");
+    expect(helpText).toContain("--scale");
+    expect(helpText).toContain("--flip");
+    expect(helpText).toContain("--rotate");
+    expect(helpText).toContain("--split");
+    expect(helpText).toContain("--measure");
+    expect(helpText).toContain("--validate");
+    expect(helpText).toContain("--lay-flat");
+    expect(helpText).toContain("--fdm");
+    expect(helpText).toContain("--help");
+  });
+
+  test("helpText documents output options", () => {
+    expect(helpText).toContain("--output");
+    expect(helpText).toContain("--outDir");
+    expect(helpText).toContain("--overwrite");
+  });
+
+  test("no args prints help and exits with code 1", () => {
+    const mockExit = jest.spyOn(process, "exit").mockImplementation(() => {
+      throw new Error("process.exit");
+    });
+    const mockLog = jest.spyOn(console, "log").mockImplementation(() => {});
+    try {
+      parseArgs(["node", "cli"]);
+    } catch {
+      // expected
+    }
+    expect(mockExit).toHaveBeenCalledWith(1);
+    expect(mockLog).toHaveBeenCalledWith(helpText);
+    mockExit.mockRestore();
+    mockLog.mockRestore();
+  });
+
+  test("--help prints help and exits with code 0", () => {
+    const mockExit = jest.spyOn(process, "exit").mockImplementation(() => {
+      throw new Error("process.exit");
+    });
+    const mockLog = jest.spyOn(console, "log").mockImplementation(() => {});
+    try {
+      parseArgs(["node", "cli", "--help"]);
+    } catch {
+      // expected
+    }
+    expect(mockExit).toHaveBeenCalledWith(0);
+    expect(mockLog).toHaveBeenCalledWith(helpText);
+    mockExit.mockRestore();
+    mockLog.mockRestore();
+  });
+
+  test("-h prints help and exits with code 0", () => {
+    const mockExit = jest.spyOn(process, "exit").mockImplementation(() => {
+      throw new Error("process.exit");
+    });
+    const mockLog = jest.spyOn(console, "log").mockImplementation(() => {});
+    try {
+      parseArgs(["node", "cli", "-h"]);
+    } catch {
+      // expected
+    }
+    expect(mockExit).toHaveBeenCalledWith(0);
+    expect(mockLog).toHaveBeenCalledWith(helpText);
+    mockExit.mockRestore();
+    mockLog.mockRestore();
   });
 });
 

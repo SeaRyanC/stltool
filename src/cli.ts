@@ -25,6 +25,35 @@ interface ParsedArgs {
   overwrite: boolean;
 }
 
+export const helpText = `stltool - A commandline STL file manipulation tool
+
+Usage: stltool <input.stl> [operations...] [-o output.stl]
+
+Operations:
+  --center [axes] [about]      Center mesh on given axes (default: xyz about origin)
+  --floor [axes]               Move mesh minimum to 0 on given axes (default: xyz)
+  --scale <amount> [about]     Scale uniformly (e.g. --scale 2)
+  --scale <axes> <amount>      Scale on specific axes (e.g. --scale xy 3)
+  --scale <x,y,z> [about]      Scale non-uniformly (e.g. --scale 2,1,3)
+  --flip <axes> [about]        Mirror across plane (e.g. --flip x)
+  --rotate <axis> <deg> [about] Rotate around axis (e.g. --rotate z 90)
+  --split                      Separate disconnected meshes into files
+  --measure                    Print dimensions, volume, and weight
+  --validate                   Check if mesh is manifold
+  --lay-flat [verbose] [axis]  Orient for minimal overhang (default axis: z)
+  --fdm [buildPlateSize]       Shortcut for validate + split + lay-flat
+
+Output options:
+  -o, --output <path>          Output file or directory
+  --outDir <path>              Output directory
+  --ow, --overwrite            Overwrite input file
+
+Other:
+  -h, --help                   Show this help message
+
+The 'about' parameter can be 'origin', 'center', or a point like 100,200,0.
+`;
+
 type Operation =
   | { kind: "center"; axes: string; about: Vec3 }
   | { kind: "floor"; axes: string }
@@ -63,9 +92,9 @@ function parseAboutArg(s: string): AboutPoint {
 
 export function parseArgs(argv: string[]): ParsedArgs {
   const args = argv.slice(2); // skip node and script
-  if (args.length === 0) {
-    console.error("Usage: stltool <input.stl> [operations...] [-o output.stl]");
-    process.exit(1);
+  if (args.length === 0 || args.includes("--help") || args.includes("-h")) {
+    console.log(helpText);
+    process.exit(args.length === 0 ? 1 : 0);
   }
 
   const inputFile = args[0]!;
