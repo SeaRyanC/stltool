@@ -442,11 +442,4 @@ export function run(argv: string[]): void {
   }
 }
 
-const isMainModule =
-  typeof process !== "undefined" &&
-  process.argv[1] !== undefined &&
-  (process.argv[1].endsWith("/cli.js") || process.argv[1].endsWith("/cli.ts"));
-
-if (isMainModule) {
-  run(process.argv);
-}
+run(process.argv);
