@@ -2,6 +2,7 @@ import type { Mesh, Vec3, Axis, AboutPoint, Triangle } from "./types.js";
 import {
   computeExtents,
   computeCenter,
+  computeVolume,
   translateMesh,
   parseAxes,
   resolveAboutPoint,
@@ -9,6 +10,7 @@ import {
   computeTriangleNormal,
   triangleArea,
   computeTotalSurfaceArea,
+  isManifold,
   dotVec3,
   negateVec3,
   normalizeVec3,
@@ -224,11 +226,10 @@ export function measureMesh(mesh: Mesh): MeasureResult {
     z: ext.max.z - ext.min.z,
   };
 
-  const { isManifold: manifoldCheck } = await_free_isManifold(mesh);
+  const manifold = isManifold(mesh);
   const parts = splitMesh(mesh);
   let totalVolume = 0;
   for (const part of parts) {
-    const { computeVolume } = await_free_computeVolume_import();
     totalVolume += computeVolume(part);
   }
 
@@ -241,59 +242,7 @@ export function measureMesh(mesh: Mesh): MeasureResult {
     volume: totalVolume,
     weight,
     volumeCount: parts.length,
-    isManifold: manifoldCheck,
-  };
-}
-
-// Avoid circular imports by importing inline-like helpers
-function await_free_isManifold(mesh: Mesh): { isManifold: boolean } {
-  // Inline watertight check
-  const { isManifold: check } = require_free_manifold_check(mesh);
-  return { isManifold: check };
-}
-
-function require_free_manifold_check(mesh: Mesh): { isManifold: boolean } {
-  const edgeCounts = new Map<string, number>();
-  for (const tri of mesh.triangles) {
-    const edges: [Vec3, Vec3][] = [
-      [tri.v1, tri.v2],
-      [tri.v2, tri.v3],
-      [tri.v3, tri.v1],
-    ];
-    for (const [a, b] of edges) {
-      const key = `${vertexKey(a)}->${vertexKey(b)}`;
-      edgeCounts.set(key, (edgeCounts.get(key) ?? 0) + 1);
-    }
-  }
-  for (const tri of mesh.triangles) {
-    const edges: [Vec3, Vec3][] = [
-      [tri.v1, tri.v2],
-      [tri.v2, tri.v3],
-      [tri.v3, tri.v1],
-    ];
-    for (const [a, b] of edges) {
-      const reverseKey = `${vertexKey(b)}->${vertexKey(a)}`;
-      const count = edgeCounts.get(reverseKey);
-      if (count !== 1) return { isManifold: false };
-    }
-  }
-  return { isManifold: true };
-}
-
-function await_free_computeVolume_import() {
-  return {
-    computeVolume: (mesh: Mesh): number => {
-      let vol = 0;
-      for (const tri of mesh.triangles) {
-        const { v1, v2, v3 } = tri;
-        vol +=
-          (v1.x * (v2.y * v3.z - v3.y * v2.z) -
-            v2.x * (v1.y * v3.z - v3.y * v1.z) +
-            v3.x * (v1.y * v2.z - v2.y * v1.z)) /
-          6.0;
-      }
-      return Math.abs(vol);
-    },
+    isManifold: manifold,
   };
 }
 
