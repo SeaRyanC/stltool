@@ -257,7 +257,7 @@ export function formatMeasure(result: MeasureResult): string {
   lines.push(
     `  Max: (${result.extents.max.x.toFixed(2)}, ${result.extents.max.y.toFixed(2)}, ${result.extents.max.z.toFixed(2)})`,
   );
-  lines.push(`Volume: ${result.volume.toFixed(2)} mm³`);
+  lines.push(`Volume: ${(result.volume / 1000).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} cm³`);
   lines.push(`Weight: ${result.weight.toFixed(2)} g`);
   if (result.volumeCount !== 1) {
     lines.push(`Volumes: ${result.volumeCount}`);

@@ -442,4 +442,6 @@ export function run(argv: string[]): void {
   }
 }
 
-run(process.argv);
+if (import.meta.url === `file://${process.argv[1]}`) {
+  run(process.argv);
+}
